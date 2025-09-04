@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Test JavaScript Caisse</title>
+</head>
+
+<body>
+    <h1>Test JavaScript Caisse</h1>
+
+    <div>
+        <h3>Test des Fonctions</h3>
+        <button onclick="testAddToCart()">Test addToCart</button>
+        <button onclick="testClearCart()">Test clearCart</button>
+        <button onclick="testCalculateTotal()">Test calculateTotal</button>
+        <button onclick="testProcessSale()">Test processSale</button>
+    </div>
+
+    <div id="cartItems">
+        <p>Panier vide</p>
+    </div>
+
+    <div>
+        <h3>Totaux</h3>
+        <p>Sous-total: <span id="subtotal">0 CFA</span></p>
+        <p>TVA: <span id="taxAmount">0 CFA</span></p>
+        <p>Total: <span id="total">0 CFA</span></p>
+    </div>
+
+    <div>
+        <h3>Champs Client</h3>
+        <input type="text" id="customerName" placeholder="Nom client">
+        <input type="tel" id="customerPhone" placeholder="Téléphone">
+        <input type="email" id="customerEmail" placeholder="Email">
+        <select id="paymentMethod">
+            <option value="cash">Espèces</option>
+            <option value="card">Carte</option>
+        </select>
+        <textarea id="notes" placeholder="Notes"></textarea>
+        <input type="number" id="discountInput" value="0" onchange="calculateTotal()">
+    </div>
+
+    <script>
+        let cart = [];
+        let products = [
+            { id: 1, name: 'Produit Test', sku: 'TEST001', selling_price: 1000, quantity: 10 }
+        ];
+
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+
+            const existingItem = cart.find(item => item.product_id === productId);
+            if (existingItem) {
+                existingItem.quantity++;
+                existingItem.total_price = existingItem.quantity * existingItem.unit_price;
+            } else {
+                cart.push({
+                    product_id: productId,
+                    name: product.name,
+                    sku: product.sku,
+                    quantity: 1,
+                    unit_price: parseFloat(product.selling_price),
+                    total_price: parseFloat(product.selling_price)
+                });
+            }
+
+            updateCartDisplay();
+            calculateTotal();
+        }
+
+        function updateCartDisplay() {
+            const cartContainer = document.getElementById('cartItems');
+
+            if (cart.length === 0) {
+                cartContainer.innerHTML = '<p>Panier vide</p>';
+                return;
+            }
+
+            let html = '';
+            cart.forEach((item, index) => {
+                html += `
+                <div style="border: 1px solid #ccc; padding: 10px; margin: 5px;">
+                    <strong>${item.name}</strong> - ${item.sku}<br>
+                    Quantité: ${item.quantity} - Prix: ${item.total_price} CFA
+                    <button onclick="removeFromCart(${index})">Supprimer</button>
+                </div>
+            `;
+            });
+
+            cartContainer.innerHTML = html;
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCartDisplay();
+            calculateTotal();
+        }
+
+        function calculateTotal() {
+            const subtotal = cart.reduce((sum, item) => sum + item.total_price, 0);
+            const discount = parseFloat(document.getElementById('discountInput').value) || 0;
+            const taxRate = 0.18;
+            const taxAmount = (subtotal - discount) * taxRate;
+            const total = subtotal - discount + taxAmount;
+
+            document.getElementById('subtotal').textContent = subtotal.toFixed(0) + ' CFA';
+            document.getElementById('taxAmount').textContent = taxAmount.toFixed(0) + ' CFA';
+            document.getElementById('total').textContent = total.toFixed(0) + ' CFA';
+        }
+
+        function clearCart() {
+            cart = [];
+            updateCartDisplay();
+            calculateTotal();
+            document.getElementById('customerName').value = '';
+            document.getElementById('customerPhone').value = '';
+            document.getElementById('customerEmail').value = '';
+            document.getElementById('notes').value = '';
+            document.getElementById('discountInput').value = '0';
+        }
+
+        function processSale() {
+            if (cart.length === 0) {
+                alert('Le panier est vide !');
+                return;
+            }
+
+            const saleData = {
+                customer_name: document.getElementById('customerName').value,
+                customer_phone: document.getElementById('customerPhone').value,
+                customer_email: document.getElementById('customerEmail').value,
+                payment_method: document.getElementById('paymentMethod').value,
+                notes: document.getElementById('notes').value,
+                items: cart,
+                subtotal: parseFloat(document.getElementById('subtotal').textContent.replace(' CFA', '').replace(/,/g, '')),
+                tax_amount: parseFloat(document.getElementById('taxAmount').textContent.replace(' CFA', '').replace(/,/g, '')),
+                discount_amount: parseFloat(document.getElementById('discountInput').value) || 0,
+                total: parseFloat(document.getElementById('total').textContent.replace(' CFA', '').replace(/,/g, ''))
+            };
+
+            console.log('Données de vente:', saleData);
+            alert('Fonction processSale appelée avec succès ! Vérifiez la console.');
+        }
+
+        // Tests
+        function testAddToCart() {
+            addToCart(1);
+            alert('Produit ajouté au panier !');
+        }
+
+        function testClearCart() {
+            clearCart();
+            alert('Panier vidé !');
+        }
+
+        function testCalculateTotal() {
+            calculateTotal();
+            alert('Totaux calculés !');
+        }
+
+        function testProcessSale() {
+            processSale();
+        }
+
+        // Initialisation
+        calculateTotal();
+    </script>
+</body>
+
+</html>

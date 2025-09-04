@@ -1,0 +1,258 @@
+let cart = [];
+let products = [];
+
+function addToCart(productId) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    const existingItem = cart.find(item => item.product_id === productId);
+    if (existingItem) {
+        existingItem.quantity++;
+        existingItem.total_price = existingItem.quantity * existingItem.unit_price;
+    } else {
+        cart.push({
+            product_id: productId,
+            name: product.name,
+            sku: product.sku,
+            quantity: 1,
+            unit_price: parseFloat(product.selling_price),
+            total_price: parseFloat(product.selling_price)
+        });
+    }
+
+    updateCartDisplay();
+    calculateTotal();
+}
+
+function removeFromCart(index) {
+    cart.splice(index, 1);
+    updateCartDisplay();
+    calculateTotal();
+}
+
+function updateQuantity(index, change) {
+    const item = cart[index];
+    const newQuantity = item.quantity + change;
+
+    if (newQuantity > 0) {
+        item.quantity = newQuantity;
+        item.total_price = item.quantity * item.unit_price;
+        updateCartDisplay();
+        calculateTotal();
+    }
+}
+
+function updateCartDisplay() {
+    const cartContainer = document.getElementById('cartItems');
+
+    if (cart.length === 0) {
+        cartContainer.innerHTML = '<p class="text-muted text-center">Aucun article dans le panier</p>';
+        return;
+    }
+
+    let html = '';
+    cart.forEach((item, index) => {
+        html += `
+            <div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+                <div class="flex-grow-1">
+                    <h6 class="mb-0 small">${item.name}</h6>
+                    <small class="text-muted">${item.sku}</small>
+                </div>
+                <div class="text-end">
+                    <div class="d-flex align-items-center">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="updateQuantity(${index}, -1)">-</button>
+                        <span class="mx-2">${item.quantity}</span>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="updateQuantity(${index}, 1)">+</button>
+                    </div>
+                    <div class="small text-muted">${item.unit_price} CFA</div>
+                    <div class="fw-bold">${item.total_price} CFA</div>
+                </div>
+                <button class="btn btn-sm btn-outline-danger ms-2" onclick="removeFromCart(${index})">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        `;
+    });
+
+    cartContainer.innerHTML = html;
+}
+
+function calculateTotal() {
+    const subtotal = cart.reduce((sum, item) => sum + item.total_price, 0);
+    const discount = parseFloat(document.getElementById('discountInput').value) || 0;
+    const taxRate = 0.18;
+    const taxAmount = (subtotal - discount) * taxRate;
+    const total = subtotal - discount + taxAmount;
+
+    document.getElementById('subtotal').textContent = subtotal.toFixed(0) + ' CFA';
+    document.getElementById('taxAmount').textContent = taxAmount.toFixed(0) + ' CFA';
+    document.getElementById('total').textContent = total.toFixed(0) + ' CFA';
+}
+
+function clearCart() {
+    console.log('clearCart appelée');
+    cart = [];
+    updateCartDisplay();
+    calculateTotal();
+    document.getElementById('customerName').value = '';
+    document.getElementById('customerPhone').value = '';
+    document.getElementById('customerEmail').value = '';
+    document.getElementById('notes').value = '';
+    document.getElementById('discountInput').value = '0';
+}
+
+function processSale() {
+    console.log('processSale appelée');
+    console.log('Cart:', cart);
+
+    if (cart.length === 0) {
+        alert('Le panier est vide !');
+        return;
+    }
+
+    const saleData = {
+        customer_name: document.getElementById('customerName').value,
+        customer_phone: document.getElementById('customerPhone').value,
+        customer_email: document.getElementById('customerEmail').value,
+        payment_method: document.getElementById('paymentMethod').value,
+        notes: document.getElementById('notes').value,
+        items: cart,
+        subtotal: parseFloat(document.getElementById('subtotal').textContent.replace(' CFA', '').replace(/,/g, '')),
+        tax_amount: parseFloat(document.getElementById('taxAmount').textContent.replace(' CFA', '').replace(/,/g, '')),
+        discount_amount: parseFloat(document.getElementById('discountInput').value) || 0,
+        total: parseFloat(document.getElementById('total').textContent.replace(' CFA', '').replace(/,/g, ''))
+    };
+
+    fetch('/cashier/sale', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify(saleData)
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('saleNumber').textContent = data.sale_id;
+                document.getElementById('printInvoice').href = `/cashier/invoice/${data.sale_id}`;
+
+                const saleModal = new bootstrap.Modal(document.getElementById('saleModal'));
+                saleModal.show();
+
+                clearCart();
+            } else {
+                alert('Erreur: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Erreur lors de la vente');
+        });
+}
+
+function searchProducts() {
+    const query = document.getElementById('searchInput').value;
+    const categoryId = document.getElementById('categoryFilter').value;
+    const supplierId = document.getElementById('supplierFilter').value;
+
+    fetch('/cashier/search', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({ query, category_id: categoryId, supplier_id: supplierId })
+    })
+        .then(response => response.json())
+        .then(data => {
+            products = data;
+            updateProductsDisplay();
+        });
+}
+
+function updateProductsDisplay() {
+    const container = document.getElementById('productsList');
+    let html = '';
+
+    products.forEach(product => {
+        html += `
+            <div class="col-md-6 col-lg-4 mb-3 product-item"
+                 data-id="${product.id}"
+                 data-name="${product.name}"
+                 data-sku="${product.sku}"
+                 data-price="${product.selling_price}"
+                 data-stock="${product.quantity}"
+                 data-category="${product.category_id}"
+                 data-supplier="${product.supplier_id}">
+                <div class="card h-100 product-card" onclick="addToCart(${product.id})">
+                    <div class="card-body text-center">
+                        <div class="mb-2">
+                            <i class="bi bi-box-seam text-primary" style="font-size: 2rem;"></i>
+                        </div>
+                        <h6 class="card-title text-truncate">${product.name}</h6>
+                        <p class="card-text small text-muted mb-1">${product.sku}</p>
+                        <p class="card-text small text-muted mb-2">${product.category ? product.category.name : 'N/A'}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-success">${product.quantity} en stock</span>
+                            <span class="fw-bold text-primary">${product.selling_price} CFA</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+function scanBarcode() {
+    const barcode = document.getElementById('barcodeInput').value;
+    if (!barcode) return;
+
+    fetch('/cashier/barcode', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({ barcode: barcode })
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert('Produit non trouvé');
+            } else {
+                addToCart(data.id);
+                document.getElementById('barcodeInput').value = '';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Erreur lors de la recherche');
+        });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const productElements = document.querySelectorAll('.product-item');
+    products = Array.from(productElements).map(el => ({
+        id: parseInt(el.dataset.id),
+        name: el.dataset.name,
+        sku: el.dataset.sku,
+        selling_price: parseFloat(el.dataset.price),
+        quantity: parseInt(el.dataset.stock),
+        category_id: parseInt(el.dataset.category),
+        supplier_id: parseInt(el.dataset.supplier)
+    }));
+
+    document.getElementById('searchInput').addEventListener('input', searchProducts);
+    document.getElementById('categoryFilter').addEventListener('change', searchProducts);
+    document.getElementById('supplierFilter').addEventListener('change', searchProducts);
+    document.getElementById('barcodeInput').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            scanBarcode();
+        }
+    });
+
+    calculateTotal();
+});

@@ -1,0 +1,33 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+
+class ReportController extends Controller
+{
+    public function index()
+    {
+        return view('reports.index');
+    }
+
+    public function stockReport()
+    {
+        return view('reports.stock');
+    }
+
+    public function salesReport(Request $request)
+    {
+        return view('reports.sales');
+    }
+
+    public function exportStock()
+    {
+        return response('Export du stock - Fonctionnalité en cours de développement', 200);
+    }
+
+    public function exportSales(Request $request)
+    {
+        return response('Export des ventes - Fonctionnalité en cours de développement', 200);
+    }
+}

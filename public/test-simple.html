@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Test Ultra Simple</title>
+</head>
+
+<body>
+    <h1>Test JavaScript Ultra Simple</h1>
+
+    <button onclick="alert('Test 1: Click fonctionne!')">Test 1: Click Simple</button>
+    <button onclick="testFunction()">Test 2: Fonction JavaScript</button>
+    <button id="testButton3">Test 3: Event Listener</button>
+
+    <div id="result"></div>
+
+    <script>
+        // Test 1: Fonction simple
+        function testFunction() {
+            alert('Test 2: Fonction JavaScript fonctionne!');
+            document.getElementById('result').innerHTML = '<p style="color: green;">✅ Fonction JavaScript OK!</p>';
+        }
+
+        // Test 2: Event Listener
+        document.getElementById('testButton3').addEventListener('click', function () {
+            alert('Test 3: Event Listener fonctionne!');
+            document.getElementById('result').innerHTML = '<p style="color: green;">✅ Event Listener OK!</p>';
+        });
+
+        // Test 3: Console log
+        console.log('JavaScript chargé avec succès!');
+
+        // Test 4: DOM Ready
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('DOM chargé!');
+            document.getElementById('result').innerHTML += '<p style="color: blue;">✅ DOM Ready OK!</p>';
+        });
+    </script>
+</body>
+
+</html>

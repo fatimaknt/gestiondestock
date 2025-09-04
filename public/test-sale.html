@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Test Vente</title>
+    <meta name="csrf-token" content="test-token">
+</head>
+
+<body>
+    <h1>Test de Finalisation de Vente</h1>
+
+    <button onclick="testSale()">Tester la Vente</button>
+
+    <div id="result"></div>
+
+    <script>
+        function testSale() {
+            const saleData = {
+                customer_name: 'Test Client',
+                customer_phone: '123456789',
+                customer_email: 'test@test.com',
+                payment_method: 'cash',
+                notes: 'Test de vente',
+                items: [
+                    {
+                        product_id: 1,
+                        quantity: 1,
+                        unit_price: 1000,
+                        total_price: 1000
+                    }
+                ],
+                subtotal: 1000,
+                tax_amount: 180,
+                discount_amount: 0,
+                total: 1180
+            };
+
+            fetch('/cashier/sale', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': 'test-token'
+                },
+                body: JSON.stringify(saleData)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('result').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                })
+                .catch(error => {
+                    document.getElementById('result').innerHTML = '<p style="color: red;">Erreur: ' + error.message + '</p>';
+                });
+        }
+    </script>
+</body>
+
+</html>
