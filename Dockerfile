@@ -1,5 +1,5 @@
 # Utiliser l'image PHP officielle
-FROM php:8.2-cli
+FROM php:8.3-cli
 
 # Installer les extensions PHP nécessaires
 RUN apt-get update && apt-get install -y \
@@ -25,7 +25,7 @@ WORKDIR /var/www/html
 COPY . .
 
 # Installer les dépendances
-RUN composer install --no-dev --optimize-autoloader
+RUN composer update --no-dev --optimize-autoloader
 
 # Configurer les permissions
 RUN chmod -R 755 storage bootstrap/cache
