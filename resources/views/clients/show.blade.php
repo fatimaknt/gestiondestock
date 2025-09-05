@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.app-with-nav')
 
 @section('title', 'Détails du Client - ' . $client->name)
 

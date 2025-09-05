@@ -55,6 +55,16 @@
                                 </div>
                             </div>
                             <div class="col-md-3">
+                                <div class="input-group">
+                                    <input type="text" id="barcodeInput" class="form-control"
+                                        placeholder="Scanner code-barres...">
+                                    <button type="button" class="btn btn-outline-primary" id="scanBarcodeBtn"
+                                        title="Scanner le code-barres">
+                                        <i class="bi bi-camera"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
                                 <select id="categoryFilter" class="form-select">
                                     <option value="">Toutes les catégories</option>
                                     @foreach ($categories as $category)
@@ -138,8 +148,8 @@
                             <!-- Quantité -->
                             <div class="mb-3">
                                 <label class="form-label">Quantité</label>
-                                <input type="number" name="quantity" id="quantity" class="form-control" value="1"
-                                    min="1" required oninput="calculateTotal()">
+                                <input type="number" name="quantity" id="quantity" class="form-control"
+                                    value="1" min="1" required oninput="calculateTotal()">
                             </div>
 
                             <!-- Prix unitaire -->
@@ -156,10 +166,10 @@
                                     <input type="number" name="total_price" id="total_price" class="form-control"
                                         step="0.00" min="0">
                                     <!--
-                                                             <button type="button" class="btn btn-outline-secondary" onclick="calculateTotal()">
-                                                                    <i class="bi bi-calculator"></i> Calculer
-                                                                </button>
-                                                                -->
+                                                                         <button type="button" class="btn btn-outline-secondary" onclick="calculateTotal()">
+                                                                                <i class="bi bi-calculator"></i> Calculer
+                                                                            </button>
+                                                                            -->
                                 </div>
                                 <small class="text-muted">Le total se calcule automatiquement, mais vous pouvez le modifier
                                     si nécessaire</small>
@@ -293,5 +303,244 @@
 
             console.log('Formulaire vidé');
         }
+
+        // Fonctionnalité de scan de code-barres
+        document.addEventListener('DOMContentLoaded', function() {
+            const barcodeInput = document.getElementById('barcodeInput');
+            const scanBtn = document.getElementById('scanBarcodeBtn');
+
+            // Scan avec caméra ou simulation
+            scanBtn.addEventListener('click', function() {
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    // Scan avec caméra réelle
+                    startCameraScan();
+                } else {
+                    // Simulation pour démonstration
+                    simulateScan();
+                }
+            });
+
+            // Fonction de simulation (pour démonstration)
+            function simulateScan() {
+                const mockBarcodes = [
+                    '1234567890123',
+                    '9876543210987',
+                    '5555666677778',
+                    '1111222233334'
+                ];
+
+                const randomBarcode = mockBarcodes[Math.floor(Math.random() * mockBarcodes.length)];
+                barcodeInput.value = randomBarcode;
+
+                // Animation de succès
+                scanBtn.innerHTML = '<i class="bi bi-check-circle text-success"></i>';
+                setTimeout(() => {
+                    scanBtn.innerHTML = '<i class="bi bi-camera"></i>';
+                }, 2000);
+
+                // Recherche automatique du produit
+                searchProductByBarcode(randomBarcode);
+            }
+
+            // Fonction de scan avec caméra
+            function startCameraScan() {
+                // Demander l'accès à la caméra
+                navigator.mediaDevices.getUserMedia({
+                        video: {
+                            facingMode: 'environment' // Caméra arrière sur mobile
+                        }
+                    })
+                    .then(function(stream) {
+                        // Créer une modal pour la caméra
+                        createCameraModal(stream);
+                    })
+                    .catch(function(error) {
+                        console.error('Erreur d\'accès à la caméra:', error);
+                        showAlert('Impossible d\'accéder à la caméra. Utilisation du mode simulation.',
+                            'warning');
+                        simulateScan();
+                    });
+            }
+
+            // Créer une modal pour afficher la caméra
+            function createCameraModal(stream) {
+                // Créer la modal
+                const modal = document.createElement('div');
+                modal.className = 'modal fade';
+                modal.id = 'cameraModal';
+                modal.innerHTML = `
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="bi bi-camera me-2"></i>Scanner le Code-Barres
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body text-center">
+                                <video id="cameraVideo" autoplay playsinline style="width: 100%; max-width: 500px;"></video>
+                                <div class="mt-3">
+                                    <p class="text-muted">Pointez la caméra vers le code-barres</p>
+                                    <div class="scan-overlay">
+                                        <div class="scan-frame"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                <button type="button" class="btn btn-primary" id="captureBtn">
+                                    <i class="bi bi-camera-fill me-2"></i>Capturer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Ajouter la modal au DOM
+                document.body.appendChild(modal);
+
+                // Afficher la modal
+                const bsModal = new bootstrap.Modal(modal);
+                bsModal.show();
+
+                // Configurer la vidéo
+                const video = modal.querySelector('#cameraVideo');
+                video.srcObject = stream;
+
+                // Gérer la fermeture de la modal
+                modal.addEventListener('hidden.bs.modal', function() {
+                    // Arrêter la caméra
+                    stream.getTracks().forEach(track => track.stop());
+                    // Supprimer la modal
+                    modal.remove();
+                });
+
+                // Gérer la capture
+                const captureBtn = modal.querySelector('#captureBtn');
+                captureBtn.addEventListener('click', function() {
+                    // Pour l'instant, on simule la capture
+                    // En production, on utiliserait une librairie comme QuaggaJS ou ZXing
+                    const mockBarcode = '1234567890123';
+                    barcodeInput.value = mockBarcode;
+                    searchProductByBarcode(mockBarcode);
+                    bsModal.hide();
+                });
+            }
+
+            // Recherche automatique quand on tape un code-barres
+            barcodeInput.addEventListener('input', function() {
+                const barcode = this.value.trim();
+                if (barcode.length >= 8) {
+                    searchProductByBarcode(barcode);
+                }
+            });
+
+            // Fonction pour rechercher un produit par code-barres
+            function searchProductByBarcode(barcode) {
+                fetch(`/cashier/search-barcode?barcode=${barcode}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            showAlert('Produit non trouvé', 'warning');
+                        } else {
+                            // Remplir automatiquement le formulaire
+                            document.getElementById('product_id').value = data.id;
+                            document.getElementById('unit_price').value = data.selling_price;
+                            document.getElementById('quantity').value = '1';
+                            document.getElementById('total_price').value = data.selling_price;
+
+                            showAlert(`Produit trouvé: ${data.name}`, 'success');
+
+                            // Vider le champ code-barres
+                            barcodeInput.value = '';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erreur:', error);
+                        showAlert('Erreur lors de la recherche', 'danger');
+                    });
+            }
+
+            // Fonction pour afficher des alertes
+            function showAlert(message, type) {
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+                alertDiv.innerHTML = `
+                    <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+
+                const container = document.querySelector('.container-fluid');
+                container.insertBefore(alertDiv, container.firstChild);
+
+                // Supprimer l'alerte après 3 secondes
+                setTimeout(() => {
+                    alertDiv.remove();
+                }, 3000);
+            }
+        });
     </script>
+
+    <!-- CSS pour l'interface de scan -->
+    <style>
+        .scan-overlay {
+            position: relative;
+            display: inline-block;
+        }
+
+        .scan-frame {
+            width: 200px;
+            height: 100px;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            position: relative;
+            animation: scanPulse 2s infinite;
+        }
+
+        .scan-frame::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border: 2px solid rgba(0, 123, 255, 0.3);
+            border-radius: 8px;
+            animation: scanGlow 2s infinite;
+        }
+
+        @keyframes scanPulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        @keyframes scanGlow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+            }
+
+            50% {
+                box-shadow: 0 0 20px rgba(0, 123, 255, 0.8);
+            }
+        }
+
+        #cameraVideo {
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-lg {
+            max-width: 600px;
+        }
+    </style>
 @endsection

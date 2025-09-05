@@ -13,7 +13,7 @@
                     <i class="bi bi-arrow-left me-2"></i>Retour
                 </a>
                 <a href="{{ route('reports.export.sales') }}" class="btn btn-outline-info">
-                    <i class="bi bi-download me-2"></i>Export CSV
+                    <i class="bi bi-file-earmark-pdf me-2"></i>Export PDF
                 </a>
             </div>
         </div>

@@ -17,17 +17,17 @@ class ShopController extends BaseController
 
     public function index()
     {
-        $shop = Auth::user()->shop;
+        // Récupérer toutes les boutiques de l'utilisateur
+        $shops = Auth::user()->shops;
 
         // Si l'utilisateur n'a pas de boutique, créer une boutique par défaut
-        if (!$shop) {
+        if ($shops->isEmpty()) {
             $shop = Shop::create([
                 'name' => Auth::user()->name . ' - Boutique',
                 'description' => 'Boutique par défaut',
                 'address' => Auth::user()->address ?? 'Adresse non définie',
                 'phone' => Auth::user()->phone ?? 'Téléphone non défini',
                 'email' => Auth::user()->email,
-                'user_id' => Auth::user()->id,
                 'is_active' => true,
                 'city' => 'Ville non définie',
                 'postal_code' => '00000',
@@ -38,38 +38,90 @@ class ShopController extends BaseController
                 'secondary_color' => '#6c757d'
             ]);
 
-            // Mettre à jour l'utilisateur avec le shop_id
+            // Créer la relation user-shop
+            Auth::user()->shops()->attach($shop->id, [
+                'role' => 'owner',
+                'is_active' => true
+            ]);
+
+            // Mettre à jour l'utilisateur avec le shop_id principal
             Auth::user()->update(['shop_id' => $shop->id]);
+
+            $shops = Auth::user()->shops;
         }
 
-        return view('shops.index', compact('shop'));
+        return view('shops.index', compact('shops'));
+    }
+
+    public function create()
+    {
+        return view('shops.create');
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'address' => 'required|string|max:500',
+            'phone' => 'required|string|max:20',
+            'email' => 'required|email|max:255',
+            'city' => 'required|string|max:100',
+            'postal_code' => 'required|string|max:10',
+            'country' => 'required|string|max:100',
+            'primary_color' => 'required|string|max:7',
+            'secondary_color' => 'required|string|max:7',
+        ]);
+
+        $shop = Shop::create([
+            'name' => $request->name,
+            'description' => $request->description,
+            'address' => $request->address,
+            'phone' => $request->phone,
+            'email' => $request->email,
+            'city' => $request->city,
+            'postal_code' => $request->postal_code,
+            'country' => $request->country,
+            'currency' => 'XOF',
+            'timezone' => 'Africa/Dakar',
+            'primary_color' => $request->primary_color,
+            'secondary_color' => $request->secondary_color,
+            'is_active' => true,
+        ]);
+
+        // Créer la relation user-shop
+        Auth::user()->shops()->attach($shop->id, [
+            'role' => 'owner',
+            'is_active' => true
+        ]);
+
+        return redirect()->route('shops.index')
+            ->with('success', 'Nouvelle boutique créée avec succès !');
+    }
+
+    public function switchShop($shopId)
+    {
+        $shop = Auth::user()->shops()->where('shop_id', $shopId)->first();
+
+        if (!$shop) {
+            return redirect()->route('shops.index')
+                ->with('error', 'Boutique non trouvée ou accès non autorisé.');
+        }
+
+        // Changer la boutique active de l'utilisateur
+        Auth::user()->update(['shop_id' => $shopId]);
+
+        return redirect()->route('dashboard')
+            ->with('success', 'Boutique changée avec succès !');
     }
 
     public function edit()
     {
         $shop = Auth::user()->shop;
 
-        // Si l'utilisateur n'a pas de boutique, créer une boutique par défaut
         if (!$shop) {
-            $shop = Shop::create([
-                'name' => Auth::user()->name . ' - Boutique',
-                'description' => 'Boutique par défaut',
-                'address' => Auth::user()->address ?? 'Adresse non définie',
-                'phone' => Auth::user()->phone ?? 'Téléphone non défini',
-                'email' => Auth::user()->email,
-                'user_id' => Auth::user()->id,
-                'is_active' => true,
-                'city' => 'Ville non définie',
-                'postal_code' => '00000',
-                'country' => 'Sénégal',
-                'currency' => 'XOF',
-                'timezone' => 'Africa/Dakar',
-                'primary_color' => '#007bff',
-                'secondary_color' => '#6c757d'
-            ]);
-
-            // Mettre à jour l'utilisateur avec le shop_id
-            Auth::user()->update(['shop_id' => $shop->id]);
+            return redirect()->route('shops.index')
+                ->with('error', 'Aucune boutique active trouvée.');
         }
 
         return view('shops.edit', compact('shop'));

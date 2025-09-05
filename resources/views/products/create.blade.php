@@ -72,6 +72,26 @@
                                     @enderror
                                 </div>
 
+                                <!-- Code-barres -->
+                                <div class="col-md-6">
+                                    <label for="barcode" class="form-label fw-semibold">
+                                        <i class="bi bi-upc-scan me-2 text-primary"></i>Code-barres
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control @error('barcode') is-invalid @enderror"
+                                            id="barcode" name="barcode" value="{{ old('barcode') }}"
+                                            placeholder="Code-barres du produit">
+                                        <button type="button" class="btn btn-outline-primary" id="scanBarcode"
+                                            title="Scanner le code-barres">
+                                            <i class="bi bi-camera"></i>
+                                        </button>
+                                    </div>
+                                    @error('barcode')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                    <small class="form-text text-muted">Laissez vide pour génération automatique</small>
+                                </div>
+
                                 <!-- Description -->
                                 <div class="col-12">
                                     <label for="description" class="form-label fw-semibold">
@@ -131,8 +151,9 @@
                                     <div class="input-group">
                                         <input type="number"
                                             class="form-control @error('purchase_price') is-invalid @enderror"
-                                            id="purchase_price" name="purchase_price" value="{{ old('purchase_price') }}"
-                                            step="1" min="0" placeholder="0" required>
+                                            id="purchase_price" name="purchase_price"
+                                            value="{{ old('purchase_price') }}" step="1" min="0"
+                                            placeholder="0" required>
                                         <span class="input-group-text">CFA</span>
                                     </div>
                                     @error('purchase_price')
@@ -393,4 +414,65 @@
             }
         }
     </style>
+
+    <!-- JavaScript pour le scan de code-barres -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Génération automatique de SKU
+            const nameInput = document.getElementById('name');
+            const skuInput = document.getElementById('sku');
+
+            nameInput.addEventListener('input', function() {
+                if (!skuInput.value) {
+                    const sku = this.value
+                        .toLowerCase()
+                        .replace(/[^a-z0-9]/g, '')
+                        .substring(0, 10)
+                        .toUpperCase();
+                    skuInput.value = sku + Math.random().toString(36).substr(2, 4).toUpperCase();
+                }
+            });
+
+            // Génération automatique de code-barres si vide
+            const barcodeInput = document.getElementById('barcode');
+            const scanButton = document.getElementById('scanBarcode');
+
+            // Génération automatique de code-barres
+            if (!barcodeInput.value) {
+                const timestamp = Date.now().toString();
+                const random = Math.random().toString(36).substr(2, 5).toUpperCase();
+                barcodeInput.value = timestamp + random;
+            }
+
+            // Simulation du scan (pour démonstration)
+            scanButton.addEventListener('click', function() {
+                // En production, ceci utiliserait une vraie API de scan
+                const mockBarcodes = [
+                    '1234567890123',
+                    '9876543210987',
+                    '5555666677778',
+                    '1111222233334'
+                ];
+
+                const randomBarcode = mockBarcodes[Math.floor(Math.random() * mockBarcodes.length)];
+                barcodeInput.value = randomBarcode;
+
+                // Animation de succès
+                this.innerHTML = '<i class="bi bi-check-circle text-success"></i>';
+                setTimeout(() => {
+                    this.innerHTML = '<i class="bi bi-camera"></i>';
+                }, 2000);
+            });
+
+            // Validation en temps réel
+            barcodeInput.addEventListener('input', function() {
+                const value = this.value;
+                if (value && value.length < 8) {
+                    this.classList.add('is-invalid');
+                } else {
+                    this.classList.remove('is-invalid');
+                }
+            });
+        });
+    </script>
 @endsection

@@ -102,15 +102,15 @@
                             <div class="col-md-3 mb-3">
                                 <a href="{{ route('reports.export.stock') }}"
                                     class="btn btn-outline-info w-100 h-100 d-flex flex-column justify-content-center align-items-center">
-                                    <i class="bi bi-download me-2" style="font-size: 1.5rem;"></i>
-                                    <span>Export Stock</span>
+                                    <i class="bi bi-file-earmark-pdf me-2" style="font-size: 1.5rem;"></i>
+                                    <span>Export Stock PDF</span>
                                 </a>
                             </div>
                             <div class="col-md-3 mb-3">
                                 <a href="{{ route('reports.export.sales') }}"
                                     class="btn btn-outline-warning w-100 h-100 d-flex flex-column justify-content-center align-items-center">
-                                    <i class="bi bi-file-earmark-spreadsheet me-2" style="font-size: 1.5rem;"></i>
-                                    <span>Export Ventes</span>
+                                    <i class="bi bi-file-earmark-pdf me-2" style="font-size: 1.5rem;"></i>
+                                    <span>Export Ventes PDF</span>
                                 </a>
                             </div>
                         </div>

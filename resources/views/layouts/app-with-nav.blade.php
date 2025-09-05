@@ -87,81 +87,96 @@
                                 <i class="bi bi-speedometer2 me-2"></i>Tableau de bord
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('products.*') ? 'active' : '' }}"
-                                href="{{ route('products.index') }}">
-                                <i class="bi bi-box me-2"></i>Produits
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('cashier.*') ? 'active' : '' }}"
-                                href="{{ route('cashier.index') }}">
-                                <i class="bi bi-cash-coin me-2"></i>Caisse
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('cashier.history') ? 'active' : '' }}"
-                                href="{{ route('cashier.history') }}">
-                                <i class="bi bi-cart me-2"></i>Ventes
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('suppliers.*') ? 'active' : '' }}"
-                                href="{{ route('suppliers.index') }}">
-                                <i class="bi bi-truck me-2"></i>Fournisseurs
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('clients.*') ? 'active' : '' }}"
-                                href="{{ route('clients.index') }}">
-                                <i class="bi bi-people me-2"></i>Clients
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('reports.*') ? 'active' : '' }}"
-                                href="{{ route('reports.index') }}">
-                                <i class="bi bi-graph-up me-2"></i>Rapports
-                            </a>
-                        </li>
+
+                        @if (!Auth::user()->hasRole('admin'))
+                            <!-- Liens réservés aux vendeurs uniquement -->
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->routeIs('products.*') ? 'active' : '' }}"
+                                    href="{{ route('products.index') }}">
+                                    <i class="bi bi-box me-2"></i>Produits
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->routeIs('cashier.*') ? 'active' : '' }}"
+                                    href="{{ route('cashier.index') }}">
+                                    <i class="bi bi-cash-coin me-2"></i>Caisse
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->routeIs('cashier.history') ? 'active' : '' }}"
+                                    href="{{ route('cashier.history') }}">
+                                    <i class="bi bi-clock-history me-2"></i>Historique Ventes
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->routeIs('suppliers.*') ? 'active' : '' }}"
+                                    href="{{ route('suppliers.index') }}">
+                                    <i class="bi bi-truck me-2"></i>Fournisseurs
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->routeIs('clients.*') ? 'active' : '' }}"
+                                    href="{{ route('clients.index') }}">
+                                    <i class="bi bi-people me-2"></i>Clients
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->routeIs('stock-movements.*') ? 'active' : '' }}"
+                                    href="{{ route('stock-movements.index') }}">
+                                    <i class="bi bi-arrow-left-right me-2"></i>Mouvements Stock
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->routeIs('reports.*') ? 'active' : '' }}"
+                                    href="{{ route('reports.index') }}">
+                                    <i class="bi bi-graph-up me-2"></i>Rapports
+                                </a>
+                            </li>
+                        @endif
                     </ul>
 
                     <ul class="navbar-nav">
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-bell me-2"></i>
-                                @php
-                                    $unreadAlerts = \App\Models\StockAlert::where('shop_id', Auth::user()->shop_id)
-                                        ->where('is_read', false)
-                                        ->count();
-                                    $unreadNotifications = \DB::table('notifications')
-                                        ->where('notifiable_id', Auth::id())
-                                        ->where('notifiable_type', 'App\Models\User')
-                                        ->whereNull('read_at')
-                                        ->count();
-                                    $totalUnread = $unreadAlerts + $unreadNotifications;
-                                @endphp
-                                @if ($totalUnread > 0)
-                                    <span class="badge bg-danger">{{ $totalUnread }}</span>
-                                @endif
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="{{ route('notifications.index') }}">
-                                        <i class="bi bi-bell me-2"></i>Notifications
-                                    </a></li>
-                                <li><a class="dropdown-item" href="{{ route('alerts.stock') }}">
-                                        <i class="bi bi-exclamation-triangle me-2"></i>Alertes de stock
-                                    </a></li>
-                            </ul>
-                        </li>
-                        <li class="nav-item dropdown">
+                        @if (!Auth::user()->hasRole('admin'))
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button"
+                                    data-bs-toggle="dropdown">
+                                    <i class="bi bi-bell me-2"></i>
+                                    @php
+                                        $unreadAlerts = \App\Models\StockAlert::where('shop_id', Auth::user()->shop_id)
+                                            ->where('is_read', false)
+                                            ->count();
+                                        $unreadNotifications = \DB::table('notifications')
+                                            ->where('notifiable_id', Auth::id())
+                                            ->where('notifiable_type', 'App\Models\User')
+                                            ->whereNull('read_at')
+                                            ->count();
+                                        $totalUnread = $unreadAlerts + $unreadNotifications;
+                                    @endphp
+                                    @if ($totalUnread > 0)
+                                        <span class="badge bg-danger">{{ $totalUnread }}</span>
+                                    @endif
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="{{ route('notifications.index') }}">
+                                            <i class="bi bi-bell me-2"></i>Notifications
+                                        </a></li>
+                                    <li><a class="dropdown-item" href="{{ route('alerts.stock') }}">
+                                            <i class="bi bi-exclamation-triangle me-2"></i>Alertes de stock
+                                        </a></li>
+                                </ul>
+                            </li>
+                        @endif
+                        <li class="nav-item dropdown ms-3">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                                 <i class="bi bi-person-circle me-2"></i>
                                 {{ Auth::user()->name }}
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="{{ route('shops.index') }}">
-                                        <i class="bi bi-shop me-2"></i>Ma Boutique
-                                    </a></li>
+                                @if (!Auth::user()->hasRole('admin'))
+                                    <li><a class="dropdown-item" href="{{ route('shops.index') }}">
+                                            <i class="bi bi-shop me-2"></i>Ma Boutique
+                                        </a></li>
+                                @endif
                                 @if (Auth::user()->hasRole('admin'))
                                     <li><a class="dropdown-item" href="{{ route('admin.users.index') }}">
                                             <i class="bi bi-people me-2"></i>Gestion des Utilisateurs

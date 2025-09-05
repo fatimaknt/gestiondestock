@@ -15,8 +15,101 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $shopId = $user->shop_id;
 
+        // Si c'est un admin, afficher le dashboard admin
+        if ($user->hasRole('admin')) {
+            return $this->adminDashboard($user);
+        }
+
+        // Sinon, dashboard vendeur normal
+        return $this->sellerDashboard($user);
+    }
+
+    private function adminDashboard($user)
+    {
+        $today = Carbon::today();
+        $thisWeek = Carbon::now()->startOfWeek();
+        $thisMonth = Carbon::now()->startOfMonth();
+        $lastMonth = Carbon::now()->subMonth()->startOfMonth();
+
+        // Statistiques globales (anonymes pour l'admin)
+        $stats = [
+            'total_shops' => \App\Models\Shop::count(),
+            'active_shops' => \App\Models\Shop::where('is_active', true)->count(),
+            'total_users' => \App\Models\User::count(),
+            'active_users' => \App\Models\User::where('is_active', true)->count(),
+            'total_products' => Product::count(),
+            'low_stock_products' => Product::where('quantity', '<=', DB::raw('min_quantity'))->count(),
+            'out_of_stock_products' => Product::where('quantity', 0)->count(),
+            // Pas de chiffres d'affaires spécifiques pour l'admin
+            'total_sales_today' => 0,
+            'total_sales_week' => 0,
+            'total_sales_month' => 0,
+            'total_sales_last_month' => 0,
+        ];
+
+        // Calculer la croissance
+        $growth = $stats['total_sales_last_month'] > 0
+            ? (($stats['total_sales_month'] - $stats['total_sales_last_month']) / $stats['total_sales_last_month']) * 100
+            : 0;
+
+        // Pas de top boutiques pour l'admin (confidentialité)
+        $topShops = collect();
+
+        // Pas de top produits pour l'admin (confidentialité)
+        $topProducts = collect();
+
+        // Ventes récentes (toutes boutiques) - SANS détails sensibles
+        $recentSales = Sale::select('id', 'total', 'status', 'created_at', 'shop_id')
+            ->with(['shop:id,name'])
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        // Alertes de stock globales
+        $stockAlerts = StockAlert::with(['product.shop'])
+            ->where('is_read', false)
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        // Utilisateurs récents
+        $recentUsers = \App\Models\User::with('shop')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        // Graphique des ventes par jour (30 derniers jours)
+        $salesChart = Sale::where('created_at', '>=', Carbon::now()->subDays(30))
+            ->selectRaw('DATE(created_at) as date, SUM(total) as total')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+
+        // Graphique des ventes par boutique (ce mois)
+        $shopsChart = \App\Models\Shop::withSum(['sales' => function($query) use ($thisMonth) {
+                $query->where('created_at', '>=', $thisMonth);
+            }], 'total')
+            ->orderBy('sales_sum_total', 'desc')
+            ->limit(10)
+            ->get();
+
+        return view('dashboard', compact(
+            'stats',
+            'growth',
+            'topShops',
+            'topProducts',
+            'recentSales',
+            'stockAlerts',
+            'recentUsers',
+            'salesChart',
+            'shopsChart'
+        ));
+    }
+
+    private function sellerDashboard($user)
+    {
+        $shopId = $user->shop_id;
         $today = Carbon::today();
         $thisWeek = Carbon::now()->startOfWeek();
         $thisMonth = Carbon::now()->startOfMonth();
@@ -68,14 +161,6 @@ class DashboardController extends Controller
             ->groupBy('date')
             ->orderBy('date')
             ->get();
-
-        // Préparer les données pour la vue
-        $stats = [
-            'total_products' => $stats['total_products'],
-            'low_stock' => $stats['low_stock_products'],
-            'monthly_sales' => $stats['total_sales_month'],
-            'revenue' => $stats['total_sales_month'],
-        ];
 
         return view('dashboard', compact(
             'stats',

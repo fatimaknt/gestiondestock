@@ -101,6 +101,9 @@ Route::prefix('cashier')->name('cashier.')->group(function () {
     // Routes des boutiques
     Route::prefix('shops')->name('shops.')->group(function () {
         Route::get('/', [ShopController::class, 'index'])->name('index');
+        Route::get('/create', [ShopController::class, 'create'])->name('create');
+        Route::post('/', [ShopController::class, 'store'])->name('store');
+        Route::get('/switch/{shopId}', [ShopController::class, 'switchShop'])->name('switch');
         Route::get('/edit', [ShopController::class, 'edit'])->name('edit');
         Route::put('/update', [ShopController::class, 'update'])->name('update');
         Route::get('/show', [ShopController::class, 'show'])->name('show');
