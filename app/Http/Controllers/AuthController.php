@@ -55,53 +55,64 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        \Log::info('Login attempt started');
+        \Log::info('=== LOGIN ATTEMPT STARTED ===');
+        \Log::info('Email: ' . $request->email);
+        \Log::info('Password length: ' . strlen($request->password));
+        
         try {
-            $validator = Validator::make($request->all(), [
-                'email' => 'required|email',
-                'password' => 'required',
-            ]);
-
-            if ($validator->fails()) {
-                \Log::info('Validation failed: ' . json_encode($validator->errors()));
+            // Vérification basique
+            if (empty($request->email) || empty($request->password)) {
+                \Log::info('Empty email or password');
                 return redirect()->back()
-                    ->withErrors($validator)
+                    ->withErrors(['email' => 'Email et mot de passe requis.'])
                     ->withInput();
             }
 
-            \Log::info('Attempting authentication for: ' . $request->email);
-            if (!Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
-                \Log::info('Authentication failed for: ' . $request->email);
-                return redirect()->back()
-                    ->withErrors(['email' => 'Les identifiants fournis ne correspondent pas à nos enregistrements.'])
-                    ->withInput();
-            }
-
-            $user = User::where('email', $request->email)->first();
-
-            if (!$user || !$user->is_active) {
-                Auth::logout();
-                return redirect()->back()
-                    ->withErrors(['email' => 'Votre compte a été désactivé.'])
-                    ->withInput();
-            }
-
-            // Essayer de régénérer la session, mais ne pas échouer si ça ne marche pas
+            // Test de connexion à la base de données
             try {
-                $request->session()->regenerate();
+                $userCount = User::count();
+                \Log::info('Users in database: ' . $userCount);
             } catch (\Exception $e) {
-                \Log::error('Session regenerate error: ' . $e->getMessage());
+                \Log::error('Database connection error: ' . $e->getMessage());
+                return redirect()->back()
+                    ->withErrors(['email' => 'Erreur de connexion à la base de données.'])
+                    ->withInput();
             }
 
-            return redirect()->intended(route('dashboard'))
-                ->with('success', 'Connexion réussie ! Bienvenue dans votre tableau de bord.');
+            // Recherche de l'utilisateur
+            $user = User::where('email', $request->email)->first();
+            \Log::info('User found: ' . ($user ? 'YES' : 'NO'));
+            
+            if (!$user) {
+                \Log::info('User not found: ' . $request->email);
+                return redirect()->back()
+                    ->withErrors(['email' => 'Utilisateur non trouvé.'])
+                    ->withInput();
+            }
+
+            // Vérification du mot de passe
+            if (!Hash::check($request->password, $user->password)) {
+                \Log::info('Password incorrect for: ' . $request->email);
+                return redirect()->back()
+                    ->withErrors(['email' => 'Mot de passe incorrect.'])
+                    ->withInput();
+            }
+
+            // Connexion manuelle
+            Auth::login($user);
+            \Log::info('User logged in successfully: ' . $user->email);
+
+            return redirect()->route('dashboard')
+                ->with('success', 'Connexion réussie !');
 
         } catch (\Exception $e) {
-            \Log::error('Login error: ' . $e->getMessage());
-            \Log::error('Login error trace: ' . $e->getTraceAsString());
-            \Log::error('Request data: ' . json_encode($request->all()));
+            \Log::error('=== LOGIN ERROR ===');
+            \Log::error('Error: ' . $e->getMessage());
+            \Log::error('File: ' . $e->getFile() . ':' . $e->getLine());
+            \Log::error('Trace: ' . $e->getTraceAsString());
+            
             return redirect()->back()
-                ->withErrors(['email' => 'Une erreur est survenue lors de la connexion.'])
+                ->withErrors(['email' => 'Erreur: ' . $e->getMessage()])
                 ->withInput();
         }
     }
