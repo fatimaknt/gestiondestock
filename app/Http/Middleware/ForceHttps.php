@@ -15,9 +15,9 @@ class ForceHttps
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Forcer HTTPS seulement si on n'est pas déjà en HTTPS
-        if (!$request->secure() && app()->environment('production')) {
-            return redirect()->secure($request->getRequestUri());
+        // Forcer HTTPS en production
+        if (app()->environment('production') && !$request->secure()) {
+            return redirect()->secure($request->getRequestUri(), 301);
         }
 
         return $next($request);
