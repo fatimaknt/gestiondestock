@@ -13,9 +13,6 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
             \App\Http\Middleware\ShopPersonalization::class,
-            \App\Http\Middleware\ForceHttps::class,
-            \App\Http\Middleware\ForceHttpsAssets::class,
-            \App\Http\Middleware\ForceHttpsRedirects::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
