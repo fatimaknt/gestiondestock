@@ -2,7 +2,7 @@ services:
   - type: web
     name: gestiondestock
     env: php
-    buildCommand: composer install
+    buildCommand: composer install && php artisan key:generate --force && php artisan migrate --force
     startCommand: php artisan serve --host=0.0.0.0 --port=$PORT
     healthCheckPath: /
     envVars:
@@ -10,6 +10,8 @@ services:
         value: production
       - key: APP_DEBUG
         value: false
+      - key: APP_KEY
+        value: base64:UTdeL6ncmADXXdG05QnRtcisCoAkMcYraupjorZf
       - key: LOG_CHANNEL
         value: stack
       - key: DB_CONNECTION
@@ -24,6 +26,26 @@ services:
         value: https://gestiondestock-z434.onrender.com
       - key: FORCE_HTTPS
         value: true
+      - key: DB_HOST
+        fromDatabase:
+          name: gestiondestock-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: gestiondestock-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: gestiondestock-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: gestiondestock-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: gestiondestock-db
+          property: password
 
   - type: pserv
     name: gestiondestock-db
