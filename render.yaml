@@ -20,6 +20,10 @@ services:
         value: file
       - key: QUEUE_CONNECTION
         value: sync
+      - key: FORCE_HTTPS
+        value: true
+      - key: APP_URL
+        value: https://gestiondestock-z434.onrender.com
 
   - type: pserv
     name: gestiondestock-db
