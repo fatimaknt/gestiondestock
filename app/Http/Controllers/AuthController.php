@@ -55,6 +55,7 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
+        \Log::info('Login attempt started');
         try {
             $validator = Validator::make($request->all(), [
                 'email' => 'required|email',
@@ -62,12 +63,15 @@ class AuthController extends Controller
             ]);
 
             if ($validator->fails()) {
+                \Log::info('Validation failed: ' . json_encode($validator->errors()));
                 return redirect()->back()
                     ->withErrors($validator)
                     ->withInput();
             }
 
+            \Log::info('Attempting authentication for: ' . $request->email);
             if (!Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
+                \Log::info('Authentication failed for: ' . $request->email);
                 return redirect()->back()
                     ->withErrors(['email' => 'Les identifiants fournis ne correspondent pas à nos enregistrements.'])
                     ->withInput();
@@ -94,6 +98,8 @@ class AuthController extends Controller
 
         } catch (\Exception $e) {
             \Log::error('Login error: ' . $e->getMessage());
+            \Log::error('Login error trace: ' . $e->getTraceAsString());
+            \Log::error('Request data: ' . json_encode($request->all()));
             return redirect()->back()
                 ->withErrors(['email' => 'Une erreur est survenue lors de la connexion.'])
                 ->withInput();
