@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\ShopPersonalization::class,
             \App\Http\Middleware\ForceHttps::class,
             \App\Http\Middleware\ForceHttpsAssets::class,
+            \App\Http\Middleware\ForceHttpsRedirects::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
