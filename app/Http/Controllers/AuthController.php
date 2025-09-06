@@ -58,7 +58,7 @@ class AuthController extends Controller
         \Log::info('=== LOGIN ATTEMPT STARTED ===');
         \Log::info('Email: ' . $request->email);
         \Log::info('Password length: ' . strlen($request->password));
-        
+
         try {
             // Vérification basique
             if (empty($request->email) || empty($request->password)) {
@@ -82,7 +82,7 @@ class AuthController extends Controller
             // Recherche de l'utilisateur
             $user = User::where('email', $request->email)->first();
             \Log::info('User found: ' . ($user ? 'YES' : 'NO'));
-            
+
             if (!$user) {
                 \Log::info('User not found: ' . $request->email);
                 return redirect()->back()
@@ -110,7 +110,7 @@ class AuthController extends Controller
             \Log::error('Error: ' . $e->getMessage());
             \Log::error('File: ' . $e->getFile() . ':' . $e->getLine());
             \Log::error('Trace: ' . $e->getTraceAsString());
-            
+
             return redirect()->back()
                 ->withErrors(['email' => 'Erreur: ' . $e->getMessage()])
                 ->withInput();
