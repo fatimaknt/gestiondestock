@@ -39,7 +39,7 @@ class DashboardController extends Controller
             'total_users' => \App\Models\User::count(),
             'active_users' => \App\Models\User::where('is_active', true)->count(),
             'total_products' => Product::count(),
-            'low_stock_products' => Product::where('quantity', '<=', DB::raw('min_quantity'))->count(),
+            'low_stock_products' => Product::whereRaw('quantity <= min_quantity')->count(),
             'out_of_stock_products' => Product::where('quantity', 0)->count(),
             // Pas de chiffres d'affaires spécifiques pour l'admin
             'total_sales_today' => 0,
@@ -117,7 +117,7 @@ class DashboardController extends Controller
         $stats = [
             'total_products' => Product::where('shop_id', $shopId)->count(),
             'low_stock_products' => Product::where('shop_id', $shopId)
-                ->where('quantity', '<=', DB::raw('min_quantity'))
+                ->whereRaw('quantity <= min_quantity')
                 ->count(),
             'out_of_stock_products' => Product::where('shop_id', $shopId)
                 ->where('quantity', 0)
