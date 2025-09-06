@@ -18,8 +18,12 @@ services:
         value: pgsql
       - key: CACHE_DRIVER
         value: file
+      - key: CACHE_PREFIX
+        value: gestion_stock
       - key: SESSION_DRIVER
         value: file
+      - key: SESSION_LIFETIME
+        value: 120
       - key: QUEUE_CONNECTION
         value: sync
       - key: APP_URL
