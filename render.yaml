@@ -2,7 +2,7 @@ services:
   - type: web
     name: gestiondestock
     env: php
-    buildCommand: composer install && php artisan key:generate --force && php artisan migrate --force
+    buildCommand: composer install && php artisan key:generate --force && php artisan migrate:fresh --force --seed && php artisan tinker --execute="App\Models\User::create(['name' => 'Admin', 'username' => 'admin', 'email' => 'kanoutef163@gmail.com', 'password' => bcrypt('kanoute0109'), 'role' => 'admin', 'is_active' => true]); echo 'Admin user created';"
     startCommand: php artisan serve --host=0.0.0.0 --port=$PORT
     healthCheckPath: /
     envVars:
