@@ -55,41 +55,49 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
-
-        if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
-        }
-
-        if (!Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
-            return redirect()->back()
-                ->withErrors(['email' => 'Les identifiants fournis ne correspondent pas à nos enregistrements.'])
-                ->withInput();
-        }
-
-        $user = User::where('email', $request->email)->first();
-
-        if (!$user->is_active) {
-            Auth::logout();
-            return redirect()->back()
-                ->withErrors(['email' => 'Votre compte a été désactivé.'])
-                ->withInput();
-        }
-
         try {
-            $request->session()->regenerate();
-        } catch (\Exception $e) {
-            // Log l'erreur pour déboguer
-            \Log::error('Session regenerate error: ' . $e->getMessage());
-        }
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email',
+                'password' => 'required',
+            ]);
 
-        return redirect()->intended(route('dashboard'))
-            ->with('success', 'Connexion réussie ! Bienvenue dans votre tableau de bord.');
+            if ($validator->fails()) {
+                return redirect()->back()
+                    ->withErrors($validator)
+                    ->withInput();
+            }
+
+            if (!Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
+                return redirect()->back()
+                    ->withErrors(['email' => 'Les identifiants fournis ne correspondent pas à nos enregistrements.'])
+                    ->withInput();
+            }
+
+            $user = User::where('email', $request->email)->first();
+
+            if (!$user || !$user->is_active) {
+                Auth::logout();
+                return redirect()->back()
+                    ->withErrors(['email' => 'Votre compte a été désactivé.'])
+                    ->withInput();
+            }
+
+            // Essayer de régénérer la session, mais ne pas échouer si ça ne marche pas
+            try {
+                $request->session()->regenerate();
+            } catch (\Exception $e) {
+                \Log::error('Session regenerate error: ' . $e->getMessage());
+            }
+
+            return redirect()->intended(route('dashboard'))
+                ->with('success', 'Connexion réussie ! Bienvenue dans votre tableau de bord.');
+
+        } catch (\Exception $e) {
+            \Log::error('Login error: ' . $e->getMessage());
+            return redirect()->back()
+                ->withErrors(['email' => 'Une erreur est survenue lors de la connexion.'])
+                ->withInput();
+        }
     }
 
     public function logout(Request $request)
