@@ -1,37 +1,36 @@
-# Utiliser l'image PHP officielle
-FROM php:8.3-cli
+FROM php:8.2-fpm
 
-# Installer les extensions PHP nécessaires
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
-    libpng-dev \
-    libjpeg-dev \
-    libfreetype6-dev \
-    libzip-dev \
-    zip \
-    unzip \
     git \
     curl \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) gd \
-    && docker-php-ext-install pdo pdo_mysql zip
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    unzip \
+    libpq-dev \
+    && docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath gd
 
-# Installer Composer
+# Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Définir le répertoire de travail
-WORKDIR /var/www/html
+# Set working directory
+WORKDIR /var/www
 
-# Copier les fichiers de l'application
+# Copy application files
 COPY . .
 
-# Installer les dépendances
-RUN composer update --no-dev --optimize-autoloader
+# Install dependencies
+RUN composer install --no-dev --optimize-autoloader
 
-# Configurer les permissions
-RUN chmod -R 755 storage bootstrap/cache
+# Set permissions
+RUN chown -R www-data:www-data /var/www \
+    && chmod -R 755 /var/www/storage \
+    && chmod -R 755 /var/www/bootstrap/cache
 
-# Exposer le port
-EXPOSE $PORT
+# Expose port
+EXPOSE 8000
 
-# Commande de démarrage
-CMD php artisan serve --host=0.0.0.0 --port=$PORT
+# Start command
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]

@@ -15,7 +15,7 @@ services:
       - key: LOG_CHANNEL
         value: stack
       - key: DB_CONNECTION
-        value: pgsql
+k        value: pgsql
       - key: CACHE_DRIVER
         value: file
       - key: CACHE_PREFIX
