@@ -81,7 +81,12 @@ class AuthController extends Controller
                 ->withInput();
         }
 
-        $request->session()->regenerate();
+        try {
+            $request->session()->regenerate();
+        } catch (\Exception $e) {
+            // Log l'erreur pour déboguer
+            \Log::error('Session regenerate error: ' . $e->getMessage());
+        }
 
         return redirect()->intended(route('dashboard'))
             ->with('success', 'Connexion réussie ! Bienvenue dans votre tableau de bord.');
