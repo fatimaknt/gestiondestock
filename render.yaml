@@ -24,6 +24,8 @@ services:
         value: https://gestiondestock-z434.onrender.com
       - key: FORCE_HTTPS
         value: true
+      - key: ASSET_URL
+        value: https://gestiondestock-z434.onrender.com
 
   - type: pserv
     name: gestiondestock-db
